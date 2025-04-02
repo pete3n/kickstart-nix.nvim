@@ -2,9 +2,8 @@
   description = "Neovim derivation";
 
   inputs = {
-		systems.url = "path:./flake.systems.nix";
-		systems.flake = false;
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
     gen-luarc.url = "github:mrcjkb/nix-gen-luarc-json";
 
     # Add bleeding-edge plugins here.
@@ -17,15 +16,18 @@
 
   outputs =
     inputs@{
-      systems,
+      self,
       nixpkgs,
+      flake-utils,
       ...
     }:
     let
-			eachSystem = nixpkgs.lib.genAttrs (import systems);
+      systems = builtins.attrNames nixpkgs.legacyPackages;
+
+      # This is where the Neovim derivation is built.
       neovim-overlay = import ./nix/neovim-overlay.nix { inherit inputs; };
     in
-    	eachSystem (
+    flake-utils.lib.eachSystem systems (
       system:
       let
         pkgs = import nixpkgs {
